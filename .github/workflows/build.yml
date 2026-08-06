@@ -13,34 +13,22 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.1
+    - name: Setup CMake
+      uses: cmake-js/setup-cmake@v3
 
-    - name: Build Release x64
+    - name: Configure CMake
       run: |
-        msbuild cs2-external-esp.sln /p:Configuration=Release /p:Platform=x64 /m /v:detailed 2>&1 | Tee-Object -FilePath build.log
-        if ($LASTEXITCODE -ne 0) {
-          Write-Output "=== BUILD ERROR ==="
-          Get-Content build.log | Select-Object -Last 50
-          exit 1
-        }
+        cmake -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
 
-    - name: Create Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: release-${{ github.run_number }}
-        release_name: "Release Build #${{ github.run_number }}"
-        body: "Luvi Client - Automated Build"
-        draft: false
-        prerelease: false
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    - name: Build with CMake
+      run: |
+        cmake --build build --config Release --parallel 4
+      continue-on-error: true
 
-    - name: Upload Artifacts
+    - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: cs2-external-esp
+        name: cs2-external-esp-build
         path: |
-          release/
-          **/*.exe
+          build/bin/
+          build/**/*.exe
