@@ -13,22 +13,17 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Setup CMake
-      uses: cmake-js/setup-cmake@v3
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.1
 
-    - name: Configure CMake
-      run: |
-        cmake -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
-
-    - name: Build with CMake
-      run: |
-        cmake --build build --config Release --parallel 4
+    - name: Build Release x64
+      run: msbuild cs2-external-esp.sln /p:Configuration=Release /p:Platform=x64 /m
       continue-on-error: true
 
-    - name: Upload Build Artifacts
+    - name: Upload Artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: cs2-external-esp-build
+        name: cs2-external-esp
         path: |
-          build/bin/
-          build/**/*.exe
+          **/*.exe
+          bin/
